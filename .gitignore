@@ -1,0 +1,11 @@
+# Build artifacts (not the shipped Speedster.exe, which is committed on purpose)
+obj/
+bin/
+*.pdb
+*.user
+*.suo
+
+# Editor/IDE
+.vs/
+.vscode/
+*.swp
