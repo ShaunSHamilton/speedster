@@ -10,16 +10,13 @@ newest first. SHAs link to the commit on GitHub.
 3. **Commit** the change - this mints the SHA.
 4. **Update** this changelog: add an entry under the new SHA, then commit it.
 
-Because an entry references the SHA of an already-made commit, the changelog is updated *after* the
-commit it documents. Changelog-only commits are not themselves listed.
+An entry references the SHA of an already-made commit, the changelog is updated _after_ the commit it documents. Changelog-only commits are not themselves listed.
 
 ---
 
-## `TBD` - measure by time, not by bytes
+## `fcaec1c3106ba928cde20ebc6f76097e6628a92e` - measure by time, not by bytes
 
-*Add the SHA of this commit here once it exists.*
-
-- A test now costs about 4 - 5 MB instead of 21 - 26 MB, and reads *more* accurately.
+- A test now costs about 4 - 5 MB instead of 21 - 26 MB, and reads _more_ accurately.
   `target_bytes_down`/`target_bytes_up` are replaced by a dual stop condition: each direction
   ends at `target_seconds_down`/`target_seconds_up` (default 3 s) or `max_bytes_down`/
   `max_bytes_up` (default 6 MB / 3 MB), whichever arrives first. The old keys are still read as
@@ -37,11 +34,6 @@ commit it documents. Changelog-only commits are not themselves listed.
   share is split into requests of at most `request_bytes_max`.
 - Everything is configurable with a wide clamped range: `streams` (1 - 64), `sample_ms`,
   `min_window_ms`, `latency_samples`, `read_buffer_bytes`, `write_chunk_bytes`, `retry_delay_ms`.
-
-## `TBD` - init
-
-*Add the SHA of the initial commit here once it exists.*
-
 - Initial system-tray app: runs an internet speed test on a schedule and logs every result to
   `%LOCALAPPDATA%\Speedster\results.csv` in plain text.
 - Built-in engine measures download, upload, latency and jitter against `speed.cloudflare.com`
