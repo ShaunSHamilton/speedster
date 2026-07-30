@@ -14,6 +14,10 @@ An entry references the SHA of an already-made commit, the changelog is updated 
 
 ---
 
+## `7ce4cf97c3b9114bf34c8232a247940f0ee04eb6` - increase report width size
+
+- increase report `max-width` to `95%`
+
 ## `fcaec1c3106ba928cde20ebc6f76097e6628a92e` - measure by time, not by bytes
 
 - A test now costs about 4 - 5 MB instead of 21 - 26 MB, and reads _more_ accurately.
