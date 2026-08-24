@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from homeassistant.config_entries import SOURCE_USER
-from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 
 from custom_components.speedster.const import CONF_INTERVAL_MINUTES, DOMAIN, OPTIONS
+
+if TYPE_CHECKING:
+    from homeassistant.core import HomeAssistant
 
 
 async def test_user_flow_seeds_every_default(hass: HomeAssistant) -> None:

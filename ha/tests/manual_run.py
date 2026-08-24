@@ -16,8 +16,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from custom_components.speedster.const import default_options  # noqa: E402
-from custom_components.speedster.engine import (  # noqa: E402
+from custom_components.speedster.const import default_options
+from custom_components.speedster.engine import (
     SpeedsterEngine,
     create_session,
 )

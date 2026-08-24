@@ -7,10 +7,9 @@ visible and the measurement internals are collapsed. Bounds come from
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import voluptuous as vol
-
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult, OptionsFlow
 from homeassistant.data_entry_flow import section
 from homeassistant.helpers.selector import (
@@ -48,7 +47,9 @@ from .const import (
     OPTIONS,
     default_options,
 )
-from .coordinator import SpeedsterConfigEntry
+
+if TYPE_CHECKING:
+    from .coordinator import SpeedsterConfigEntry
 
 #: Which options appear in which collapsible section of the options form.
 SECTIONS: dict[str, tuple[str, ...]] = {
@@ -81,7 +82,7 @@ COLLAPSED = ("gate", "measurement", "tuning")
 
 
 def _selector(key: str) -> Any:
-    """A selector matching the option's type and clamp bounds."""
+    """Build a selector matching the option's type and clamp bounds."""
     default, low, high = OPTIONS[key]
     if key == CONF_GATE_ENTITY:
         return EntitySelector()
@@ -109,9 +110,7 @@ def _options_schema(current: dict[str, Any]) -> vol.Schema:
             else:
                 marker = vol.Required(key, description={"suggested_value": suggested})
             fields[marker] = _selector(key)
-        schema[vol.Required(name)] = section(
-            vol.Schema(fields), {"collapsed": name in COLLAPSED}
-        )
+        schema[vol.Required(name)] = section(vol.Schema(fields), {"collapsed": name in COLLAPSED})
     return vol.Schema(schema)
 
 
@@ -139,9 +138,7 @@ class SpeedsterConfigFlow(ConfigFlow, domain=DOMAIN):
 
     VERSION = 1
 
-    async def async_step_user(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
+    async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Create the single entry."""
         if user_input is not None:
             options = default_options()
@@ -161,7 +158,7 @@ class SpeedsterConfigFlow(ConfigFlow, domain=DOMAIN):
         )
 
     @staticmethod
-    def async_get_options_flow(entry: SpeedsterConfigEntry) -> SpeedsterOptionsFlow:
+    def async_get_options_flow(_entry: SpeedsterConfigEntry) -> SpeedsterOptionsFlow:
         """Return the options flow."""
         return SpeedsterOptionsFlow()
 
@@ -169,9 +166,7 @@ class SpeedsterConfigFlow(ConfigFlow, domain=DOMAIN):
 class SpeedsterOptionsFlow(OptionsFlow):
     """Every settings.ini knob, in one sectioned form."""
 
-    async def async_step_init(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
+    async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Show and save the options."""
         if user_input is not None:
             return self.async_create_entry(

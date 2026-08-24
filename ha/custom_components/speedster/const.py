@@ -86,7 +86,7 @@ def clamp(value: Any, low: Any, high: Any) -> Any:
     """Port of ``Settings.Bound``: pull a value back inside its range."""
     if low is None or high is None:
         return value
-    return low if value < low else (high if value > high else value)
+    return low if value < low else (min(value, high))
 
 
 def default_options() -> dict[str, Any]:

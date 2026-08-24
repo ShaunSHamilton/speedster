@@ -33,7 +33,7 @@ def _meter(samples: list[tuple[int, int]], first: int, last: int) -> Meter:
     meter.first_tick = first
     meter.last_tick = last
     meter.bytes = samples[-1][1]
-    meter._samples = samples  # noqa: SLF001 - the series is the fixture
+    meter._samples = samples
     return meter
 
 
@@ -126,9 +126,7 @@ async def test_download_counts_bytes_and_stops_at_ceiling(options: dict[str, Any
                 body=payload,
             )
             engine = SpeedsterEngine(session)
-            moved, seconds, mbps, error = await engine._transfer(  # noqa: SLF001
-                options, upload=False
-            )
+            moved, seconds, mbps, error = await engine._transfer(options, upload=False)
     finally:
         await session.close()
 
@@ -153,9 +151,7 @@ async def test_download_retries_smaller_when_throttled(options: dict[str, Any]) 
                 body=b"y" * 200000,
             )
             engine = SpeedsterEngine(session)
-            moved, _seconds, _mbps, error = await engine._transfer(  # noqa: SLF001
-                options, upload=False
-            )
+            moved, _seconds, _mbps, error = await engine._transfer(options, upload=False)
     finally:
         await session.close()
 
@@ -177,9 +173,7 @@ async def test_direction_that_moved_nothing_is_an_error(options: dict[str, Any])
                 repeat=True,
             )
             engine = SpeedsterEngine(session)
-            moved, _seconds, mbps, error = await engine._transfer(  # noqa: SLF001
-                options, upload=False
-            )
+            moved, _seconds, mbps, error = await engine._transfer(options, upload=False)
     finally:
         await session.close()
 

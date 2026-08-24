@@ -86,7 +86,7 @@ class SpeedsterCoordinator(DataUpdateCoordinator[SpeedResult | None]):
 
     @property
     def paused(self) -> bool:
-        """Is the schedule suspended?"""
+        """Report whether the schedule is suspended."""
         return bool(self.options[CONF_PAUSED])
 
     @property
@@ -154,7 +154,7 @@ class SpeedsterCoordinator(DataUpdateCoordinator[SpeedResult | None]):
 
     @callback
     def _async_watch_gate(self) -> None:
-        """Re-check the schedule whenever the gate entity changes, as the app does on network change."""
+        """Re-check the schedule when the gate changes, as the app does on network change."""
         self._async_unsub_gate()
         if entity_id := self.options[CONF_GATE_ENTITY]:
             self._gate_unsub = async_track_state_change_event(
@@ -163,7 +163,7 @@ class SpeedsterCoordinator(DataUpdateCoordinator[SpeedResult | None]):
 
     @callback
     def _async_gate_changed(self, _event: Event[EventStateChangedData]) -> None:
-        """A gate transition can make a due test runnable right now."""
+        """Run a due test right now if the gate transition allows it."""
         self.hass.async_create_task(self._tick(dt_util.utcnow()))
 
     @callback

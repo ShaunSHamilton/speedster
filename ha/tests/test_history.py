@@ -7,11 +7,14 @@ history from either side must be readable by the other.
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from custom_components.speedster import history
 from custom_components.speedster.const import CSV_HEADER
 from custom_components.speedster.engine import SpeedResult
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 RESULT = SpeedResult(
     timestamp_utc=datetime(2026, 8, 24, 10, 30, tzinfo=UTC),
@@ -65,8 +68,7 @@ def test_legacy_rows_are_padded(tmp_path: Path) -> None:
     """Rows written before down_seconds/up_seconds existed still parse."""
     path = tmp_path / "results.csv"
     path.write_text(
-        CSV_HEADER
-        + "\n2026-01-01T00:00:00+00:00,9,3,20,1,1000,500,Home,no,cloudflare,LHR,\n",
+        CSV_HEADER + "\n2026-01-01T00:00:00+00:00,9,3,20,1,1000,500,Home,no,cloudflare,LHR,\n",
         encoding="utf-8",
     )
     restored = history.last(path)

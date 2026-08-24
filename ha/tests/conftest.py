@@ -2,16 +2,18 @@
 
 from __future__ import annotations
 
-from collections.abc import Generator
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pytest
-
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.speedster.const import DOMAIN, default_options
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from homeassistant.config_entries import ConfigEntry
+    from homeassistant.core import HomeAssistant
 
 
 @pytest.fixture(autouse=True)
@@ -19,7 +21,7 @@ def auto_enable_custom_integrations(
     enable_custom_integrations: Any,
 ) -> Generator[None]:
     """Let Home Assistant load custom_components/speedster in every test."""
-    yield
+    return
 
 
 @pytest.fixture

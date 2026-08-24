@@ -3,15 +3,16 @@
 from __future__ import annotations
 
 from dataclasses import asdict
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from homeassistant.core import HomeAssistant
+if TYPE_CHECKING:
+    from homeassistant.core import HomeAssistant
 
-from .coordinator import SpeedsterConfigEntry
+    from .coordinator import SpeedsterConfigEntry
 
 
 async def async_get_config_entry_diagnostics(
-    hass: HomeAssistant, entry: SpeedsterConfigEntry
+    _hass: HomeAssistant, entry: SpeedsterConfigEntry
 ) -> dict[str, Any]:
     """Return diagnostics for a config entry. Nothing here is personal."""
     coordinator = entry.runtime_data

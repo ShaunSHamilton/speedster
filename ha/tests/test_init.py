@@ -3,18 +3,19 @@
 from __future__ import annotations
 
 from datetime import timedelta
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from unittest.mock import AsyncMock, patch
 
 import pytest
-
 from homeassistant.config_entries import ConfigEntry, ConfigEntryState
-from homeassistant.core import HomeAssistant
 from homeassistant.util import dt as dt_util
 from pytest_homeassistant_custom_component.common import async_fire_time_changed
 
 from custom_components.speedster.const import DOMAIN, SERVICE_RUN_TEST
 from custom_components.speedster.engine import SpeedResult
+
+if TYPE_CHECKING:
+    from homeassistant.core import HomeAssistant
 
 RESULT = SpeedResult(down_mbps=9.1, up_mbps=2.2, latency_ms=21.0, down_bytes=4_000_000)
 
@@ -46,9 +47,7 @@ async def test_entities_created(hass: HomeAssistant, mock_entry: ConfigEntry) ->
         assert hass.states.get(entity_id) is not None, entity_id
 
 
-async def test_startup_delay_then_first_test(
-    hass: HomeAssistant, mock_entry: ConfigEntry
-) -> None:
+async def test_startup_delay_then_first_test(hass: HomeAssistant, mock_entry: ConfigEntry) -> None:
     """Nothing runs during the grace period; the first tick past it fires a test."""
     run = await _setup(hass, mock_entry)
     coordinator = mock_entry.runtime_data
@@ -66,14 +65,12 @@ async def test_startup_delay_then_first_test(
     assert hass.states.get("sensor.speedster_download").state == "9.1"
 
 
-async def test_interval_is_not_double_fired(
-    hass: HomeAssistant, mock_entry: ConfigEntry
-) -> None:
+async def test_interval_is_not_double_fired(hass: HomeAssistant, mock_entry: ConfigEntry) -> None:
     """last_run plus the interval is the gate, so ticks in between do nothing."""
     run = await _setup(hass, mock_entry)
     coordinator = mock_entry.runtime_data
     coordinator.last_run = dt_util.utcnow()
-    coordinator._not_before = dt_util.utcnow()  # noqa: SLF001 - skip the startup grace
+    coordinator._not_before = dt_util.utcnow()
 
     with patch("custom_components.speedster.engine.SpeedsterEngine.run", run):
         async_fire_time_changed(hass, dt_util.utcnow() + timedelta(minutes=59))
@@ -85,7 +82,7 @@ async def test_pause_stops_the_schedule(hass: HomeAssistant, mock_entry: ConfigE
     """The pause switch suspends the schedule without unloading anything."""
     run = await _setup(hass, mock_entry)
     coordinator = mock_entry.runtime_data
-    coordinator._not_before = dt_util.utcnow()  # noqa: SLF001
+    coordinator._not_before = dt_util.utcnow()
 
     await hass.services.async_call(
         "switch", "turn_on", {"entity_id": "switch.speedster_pause"}, blocking=True

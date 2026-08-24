@@ -2,22 +2,27 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
     BinarySensorEntity,
 )
 from homeassistant.const import EntityCategory
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .coordinator import SpeedsterConfigEntry, SpeedsterCoordinator
 from .entity import SpeedsterEntity
+
+if TYPE_CHECKING:
+    from homeassistant.core import HomeAssistant
+    from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+
+    from .coordinator import SpeedsterConfigEntry, SpeedsterCoordinator
 
 PARALLEL_UPDATES = 0
 
 
 async def async_setup_entry(
-    hass: HomeAssistant,
+    _hass: HomeAssistant,
     entry: SpeedsterConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
@@ -37,7 +42,7 @@ class SpeedsterProblem(SpeedsterEntity, BinarySensorEntity):
 
     @property
     def is_on(self) -> bool:
-        """Did the last run fail outright?"""
+        """Report whether the last run failed outright."""
         error = self.coordinator.last_error
         return bool(error) and not error.startswith("skipped:")
 
@@ -59,5 +64,5 @@ class SpeedsterTesting(SpeedsterEntity, BinarySensorEntity):
 
     @property
     def is_on(self) -> bool:
-        """Is a test running right now?"""
+        """Report whether a test is running right now."""
         return self.coordinator.testing

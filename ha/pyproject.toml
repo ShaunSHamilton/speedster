@@ -12,6 +12,7 @@ select = ["ALL"]
 ignore = [
   "ANN401",  # Any is the honest type for an options mapping
   "COM812",  # handled by the formatter
+  "CPY001",  # no copyright header convention in this repo
   "D203",
   "D213",
   "ISC001",
@@ -21,7 +22,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["ANN", "D", "S101", "SLF001", "PLR2004", "PT019"]
+"tests/*" = ["ANN", "ARG001", "D", "PLC0415", "S101", "SLF001", "PLR2004", "PT019"]
 
 [tool.mypy]
 python_version = "3.13"

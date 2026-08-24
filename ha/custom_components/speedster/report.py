@@ -40,13 +40,12 @@ def _template_path() -> Path:
     ):
         if candidate.is_file():
             return candidate
-    raise TemplateMissingError(
-        f"{TEMPLATE_NAME} not found next to the integration or in the repo root"
-    )
+    msg = f"{TEMPLATE_NAME} not found next to the integration or in the repo root"
+    raise TemplateMissingError(msg)
 
 
 def _js_str(value: str | None) -> str:
-    """Quote a string for embedding in a script block.
+    r"""Quote a string for embedding in a script block.
 
     ``<`` becomes ``\\u003c`` so a value can never close the script element.
     """
@@ -69,7 +68,7 @@ def _js_str(value: str | None) -> str:
 
 
 def _js_num(value: str) -> str:
-    """A numeric cell, or ``null`` when the cell is empty or unparseable."""
+    """Format a numeric cell, or ``null`` when the cell is empty or unparseable."""
     try:
         number = float(value)
     except ValueError:
@@ -95,30 +94,29 @@ def build(csv_path: Path, config_dir: Path, options: dict[str, object]) -> Path:
     """
     template = _template_path().read_text(encoding="utf-8")
 
-    rows = []
-    for f in csv_read(csv_path):
-        rows.append(
-            "["
-            + ",".join(
-                (
-                    _epoch_ms(f[0]),
-                    _js_num(f[1]),
-                    _js_num(f[2]),
-                    _js_num(f[3]),
-                    _js_num(f[4]),
-                    _js_num(f[5]),
-                    _js_num(f[6]),
-                    _js_str(f[7]),
-                    "1" if f[8] == "yes" else "0",
-                    _js_str(f[9]),
-                    _js_str(f[10]),
-                    _js_str(f[11]),
-                    _js_num(f[12]),
-                    _js_num(f[13]),
-                )
+    rows = [
+        "["
+        + ",".join(
+            (
+                _epoch_ms(f[0]),
+                _js_num(f[1]),
+                _js_num(f[2]),
+                _js_num(f[3]),
+                _js_num(f[4]),
+                _js_num(f[5]),
+                _js_num(f[6]),
+                _js_str(f[7]),
+                "1" if f[8] == "yes" else "0",
+                _js_str(f[9]),
+                _js_str(f[10]),
+                _js_str(f[11]),
+                _js_num(f[12]),
+                _js_num(f[13]),
             )
-            + "]"
         )
+        + "]"
+        for f in csv_read(csv_path)
+    ]
     data = "[" + ",\n".join(rows) + "]"
 
     meta = (

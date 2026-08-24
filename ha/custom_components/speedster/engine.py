@@ -25,17 +25,20 @@ which a custom integration cannot ship or install into Home Assistant OS.
 from __future__ import annotations
 
 import asyncio
+import itertools
 import logging
 import re
 import time
-from collections.abc import AsyncIterator, Mapping
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import aiohttp
 
 from .const import CF_HOST, USER_AGENT
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator, Mapping
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -80,7 +83,7 @@ class SpeedResult:
         return self.down_bytes + self.up_bytes
 
 
-class _Aborted(Exception):
+class _AbortedError(Exception):
     """Raised from the upload body generator when the stop condition trips."""
 
 
@@ -124,15 +127,14 @@ class Meter:
     def mark_end(self) -> None:
         """Note that a stream has finished."""
         t = self.elapsed_ms
-        if t > self.last_tick:
-            self.last_tick = t
+        self.last_tick = max(self.last_tick, t)
 
     def sample(self) -> None:
         """Append a cumulative-bytes sample at the current time."""
         self._samples.append((self.elapsed_ms, self.bytes))
 
     def done(self, target_ms: int, hard_ms: int) -> bool:
-        """Has the target window elapsed since the first byte, or the hard guard tripped?"""
+        """Report whether the target window elapsed, or the hard guard tripped."""
         t = self.elapsed_ms
         if t >= hard_ms:
             return True
@@ -154,7 +156,7 @@ class Meter:
         Returns ``(seconds, mbps)`` where ``seconds`` is the surviving window,
         not the length of the transfer.
         """
-        first = 0 if self.first_tick < 0 else self.first_tick
+        first = max(self.first_tick, 0)
         last = self.last_tick
         span = last - first
         if span <= 0:
@@ -207,7 +209,7 @@ def server_name(headers: Mapping[str, str]) -> str:
 
 
 def _upload_buffer(size: int) -> bytes:
-    """The payload pattern from ``Up`` in Speedster.cs."""
+    """Build the payload pattern from ``Up`` in Speedster.cs."""
     return bytes((i * 31 + 7) & 0xFF for i in range(size))
 
 
@@ -246,7 +248,7 @@ class SpeedsterEngine:
                 result.error = f"upload failed: {up_error}"
         except asyncio.CancelledError:
             raise
-        except Exception as err:  # noqa: BLE001 - a failed test is data, not a crash
+        except Exception as err:
             result.error = f"{type(err).__name__}: {err}"
             _LOGGER.debug("test failed", exc_info=True)
         return result
@@ -279,7 +281,7 @@ class SpeedsterEngine:
 
         jitter = 0.0
         if len(samples) > 1:
-            diffs = sum(abs(b - a) for a, b in zip(samples, samples[1:], strict=True))
+            diffs = sum(abs(b - a) for a, b in itertools.pairwise(samples))
             jitter = diffs / (len(samples) - 1)
         return min(samples), jitter, server
 
@@ -308,7 +310,9 @@ class SpeedsterEngine:
         async def one_stream() -> None:
             try:
                 if upload:
-                    await self._up(meter, cfg, buffer, per_stream, target_ms, hard_ms)
+                    await self._up(
+                        meter, cfg, buffer, per_stream, target_ms=target_ms, hard_ms=hard_ms
+                    )
                 else:
                     await self._down(meter, cfg, per_stream, target_ms, hard_ms)
             except asyncio.CancelledError:
@@ -384,6 +388,7 @@ class SpeedsterEngine:
         cfg: Mapping[str, Any],
         buffer: bytes,
         want: int,
+        *,
         target_ms: int,
         hard_ms: int,
     ) -> None:
@@ -396,7 +401,9 @@ class SpeedsterEngine:
             stop = False
             while True:
                 try:
-                    stop = await self._up_once(meter, cfg, buffer, ask, target_ms, hard_ms)
+                    stop = await self._up_once(
+                        meter, buffer, ask, target_ms=target_ms, hard_ms=hard_ms
+                    )
                     break
                 except aiohttp.ClientResponseError as err:
                     if attempt >= cfg["retry_count"] or err.status not in THROTTLED_STATUS:
@@ -412,9 +419,9 @@ class SpeedsterEngine:
     async def _up_once(
         self,
         meter: Meter,
-        cfg: Mapping[str, Any],
         buffer: bytes,
         ask: int,
+        *,
         target_ms: int,
         hard_ms: int,
     ) -> bool:
@@ -439,7 +446,7 @@ class SpeedsterEngine:
                 left -= n
                 if meter.done(target_ms, hard_ms):
                     aborted = True
-                    raise _Aborted
+                    raise _AbortedError
 
         try:
             async with self._session.post(
@@ -452,7 +459,7 @@ class SpeedsterEngine:
             ) as resp:
                 resp.raise_for_status()
                 await resp.read()
-        except _Aborted:
+        except _AbortedError:
             pass
         except aiohttp.ClientError:
             # An aborted body surfaces as a connection error; that is expected.
@@ -462,7 +469,7 @@ class SpeedsterEngine:
 
 
 def create_session(connector_limit: int = 64) -> aiohttp.ClientSession:
-    """A session tuned for measurement: no proxies, no cache, generous socket timeouts."""
+    """Build a session tuned for measurement: no proxies, no cache, generous socket timeouts."""
     return aiohttp.ClientSession(
         connector=aiohttp.TCPConnector(limit=connector_limit),
         timeout=aiohttp.ClientTimeout(

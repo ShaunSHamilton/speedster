@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -14,11 +12,17 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.const import EntityCategory, UnitOfDataRate, UnitOfInformation, UnitOfTime
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .coordinator import SpeedsterConfigEntry, SpeedsterCoordinator
 from .entity import SpeedsterEntity
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    from datetime import datetime
+
+    from homeassistant.core import HomeAssistant
+    from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+
+    from .coordinator import SpeedsterConfigEntry, SpeedsterCoordinator
 
 PARALLEL_UPDATES = 0
 
@@ -43,6 +47,17 @@ def _seconds_attrs(key: str) -> Callable[[SpeedsterCoordinator], dict[str, Any]]
         return {"measured_seconds": round(getattr(result, key), 3)}
 
     return _attrs
+
+
+def _status(coordinator: SpeedsterCoordinator) -> str:
+    """Return one word for what the last run did."""
+    if coordinator.testing:
+        return "testing"
+    if coordinator.last_error:
+        return "skipped" if coordinator.last_error.startswith("skipped:") else "failed"
+    if coordinator.data is None:
+        return "unknown"
+    return "ok"
 
 
 SENSORS: tuple[SpeedsterSensorDescription, ...] = (
@@ -129,7 +144,7 @@ SENSORS: tuple[SpeedsterSensorDescription, ...] = (
         device_class=SensorDeviceClass.ENUM,
         options=["ok", "testing", "skipped", "failed", "unknown"],
         needs_result=False,
-        value_fn=lambda c: _status(c),
+        value_fn=_status,
         attrs_fn=lambda c: {
             "error": c.last_error,
             "server": c.data.server if c.data else "",
@@ -139,19 +154,8 @@ SENSORS: tuple[SpeedsterSensorDescription, ...] = (
 )
 
 
-def _status(coordinator: SpeedsterCoordinator) -> str:
-    """One word for what the last run did."""
-    if coordinator.testing:
-        return "testing"
-    if coordinator.last_error:
-        return "skipped" if coordinator.last_error.startswith("skipped:") else "failed"
-    if coordinator.data is None:
-        return "unknown"
-    return "ok"
-
-
 async def async_setup_entry(
-    hass: HomeAssistant,
+    _hass: HomeAssistant,
     entry: SpeedsterConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:

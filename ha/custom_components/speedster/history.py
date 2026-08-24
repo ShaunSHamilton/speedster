@@ -14,17 +14,20 @@ from __future__ import annotations
 import csv
 import logging
 from datetime import UTC, datetime
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from .const import CSV_HEADER
 from .engine import SpeedResult
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 _LOGGER = logging.getLogger(__name__)
 
 FIELDS = 14
 
 
-def _num(value: float, ok: bool) -> str:
+def _num(value: float, *, ok: bool) -> str:
     """Format a metric. A failed test writes an empty cell, never a misleading 0."""
     if not ok and value <= 0:
         return ""
@@ -39,10 +42,10 @@ def append(path: Path, result: SpeedResult) -> None:
         ok = result.ok
         row = [
             result.timestamp_utc.isoformat(),
-            _num(result.down_mbps, ok),
-            _num(result.up_mbps, ok),
-            _num(result.latency_ms, ok),
-            _num(result.jitter_ms, ok),
+            _num(result.down_mbps, ok=ok),
+            _num(result.up_mbps, ok=ok),
+            _num(result.latency_ms, ok=ok),
+            _num(result.jitter_ms, ok=ok),
             str(result.down_bytes),
             str(result.up_bytes),
             result.network,
@@ -50,8 +53,8 @@ def append(path: Path, result: SpeedResult) -> None:
             result.engine,
             result.server,
             result.error,
-            _num(result.down_seconds, ok),
-            _num(result.up_seconds, ok),
+            _num(result.down_seconds, ok=ok),
+            _num(result.up_seconds, ok=ok),
         ]
         with path.open("a", encoding="utf-8", newline="") as handle:
             if fresh:
