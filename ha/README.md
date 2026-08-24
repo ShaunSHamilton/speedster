@@ -13,7 +13,7 @@ The measurement engine from [Speedster](../README.md), running inside Home Assis
 
 **HACS** - add `https://github.com/ShaunSHamilton/speedster` as a custom repository of type *Integration*, install Speedster, restart Home Assistant, then **Settings -> Devices & services -> Add integration -> Speedster**.
 
-**Manually** - copy `ha/custom_components/speedster` into `<config>/custom_components/`, copy the repo root `portal.html` into that same folder (it is the report template), and restart.
+**Manually** - copy [`custom_components/speedster`](../custom_components/speedster) into `<config>/custom_components/`, copy repo root `portal.html` into that same folder (it is the report template), and restart.
 
 Requires Home Assistant 2026.1 or newer. No extra Python packages.
 
@@ -66,11 +66,11 @@ Skipped and failed runs are logged too, with empty metrics and an `error` such a
 ## Development
 
 ```bash
-cd ha
-pip install -r requirements-dev.txt
-pytest                       # engine, CSV and integration tests
-python -m tests.manual_run   # one real test, printed - compare against the tray app
-scripts/develop              # a throwaway Home Assistant with the integration loaded
+python -m venv ha/.venv
+ha/.venv/bin/pip install -r ha/requirements-dev.txt
+ha/.venv/bin/pytest -c ha/pyproject.toml  # engine, CSV and integration tests
+ha/.venv/bin/python -m ha.tests.manual_run # one live test
+ha/scripts/develop                         # throwaway Home Assistant instance
 ```
 
 `tests/test_engine.py` is the one to keep green: it pins each branch of the rate estimator to a hand-computed answer, because a mistake there is invisible - the number still looks plausible.

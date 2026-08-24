@@ -15,10 +15,12 @@ if [ ! -d .venv ]; then
   ./.venv/bin/pip install -r requirements-dev.txt
 fi
 
-mkdir -p devcfg/custom_components
-ln -sfn "$PWD/custom_components/speedster" devcfg/custom_components/speedster
-# The report template is shared with the Windows build and lives at the repo root.
-ln -sfn "$PWD/../portal.html" custom_components/speedster/portal.html
+rm -rf devcfg/custom_components/speedster
+mkdir -p devcfg/custom_components/speedster
+# Link each package entry so source edits remain live without writing dev-only files
+# into tracked integration directory.
+ln -sfn "$PWD/../custom_components/speedster/"* devcfg/custom_components/speedster/
+ln -sfn "$PWD/../portal.html" devcfg/custom_components/speedster/portal.html
 
 if [ ! -f devcfg/configuration.yaml ]; then
   cat > devcfg/configuration.yaml <<'YAML'

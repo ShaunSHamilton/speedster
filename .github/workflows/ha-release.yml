@@ -1,8 +1,7 @@
 name: Release integration
 
-# HACS installs whatever is at the root of the zip, so the package is repackaged
-# with portal.html copied in from the repo root - the template stays a single
-# source of truth shared with the Windows build.
+# HACS extracts release archives directly into custom_components/speedster.
+# Package integration files at archive root and add shared report template.
 on:
   release:
     types: [published]
@@ -21,20 +20,22 @@ jobs:
         if: github.event_name == 'release'
         run: |
           version="${GITHUB_REF_NAME#v}"
-          python - "$version" <<'PY'
-          import json, sys, pathlib
-          path = pathlib.Path("ha/custom_components/speedster/manifest.json")
-          manifest = json.loads(path.read_text())
-          manifest["version"] = sys.argv[1]
-          path.write_text(json.dumps(manifest, indent=2) + "\n")
-          PY
+          jq --arg version "$version" '.version = $version' \
+            custom_components/speedster/manifest.json > manifest.json
+          mv manifest.json custom_components/speedster/manifest.json
 
       - name: Build speedster.zip
         run: |
           mkdir -p build
-          cp -r ha/custom_components build/
-          cp portal.html build/custom_components/speedster/portal.html
-          cd build && zip -r ../speedster.zip custom_components
+          cp -r custom_components/speedster/. build/
+          cp portal.html build/portal.html
+          cd build && zip -r ../speedster.zip .
+
+      - name: Validate archive layout
+        run: |
+          test "$(unzip -Z1 speedster.zip | grep -c '^manifest.json$')" -eq 1
+          test "$(unzip -Z1 speedster.zip | grep -c '^portal.html$')" -eq 1
+          ! unzip -Z1 speedster.zip | grep -q '^custom_components/'
 
       - uses: softprops/action-gh-release@v2
         if: github.event_name == 'release'

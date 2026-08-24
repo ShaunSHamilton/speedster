@@ -2,49 +2,47 @@ name: Validate integration
 
 on:
   push:
-    paths: ["ha/**", "hacs.json", ".github/workflows/ha-validate.yml"]
+    paths:
+      - "custom_components/**"
+      - "ha/**"
+      - "portal.html"
+      - "hacs.json"
+      - ".github/workflows/ha-validate.yml"
   pull_request:
-    paths: ["ha/**", "hacs.json", ".github/workflows/ha-validate.yml"]
+    paths:
+      - "custom_components/**"
+      - "ha/**"
+      - "portal.html"
+      - "hacs.json"
+      - ".github/workflows/ha-validate.yml"
   workflow_dispatch:
 
 jobs:
   test:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ha
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
           cache: pip
-      - run: pip install -r requirements-dev.txt
-      - name: portal.html must not be duplicated
-        working-directory: .
-        run: |
-          if [ -f ha/custom_components/speedster/portal.html ]; then
-            diff -q portal.html ha/custom_components/speedster/portal.html
-          fi
-      - run: ruff check .
-      - run: ruff format --check .
-      - run: mypy custom_components/speedster
-      - run: pytest -q
+          cache-dependency-path: ha/requirements-dev.txt
+      - run: pip install -r ha/requirements-dev.txt
+      - run: ruff check --config ha/pyproject.toml custom_components ha
+      - run: ruff format --check --config ha/pyproject.toml custom_components ha
+      - run: mypy --config-file ha/pyproject.toml custom_components/speedster
+      - run: pytest -q -c ha/pyproject.toml
 
   hassfest:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - name: Stage custom_components at repo root
-        run: cp -r ha/custom_components .
       - uses: home-assistant/actions/hassfest@master
 
   hacs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - name: Stage custom_components at repo root
-        run: cp -r ha/custom_components .
       - uses: hacs/action@main
         with:
           category: integration

@@ -102,7 +102,7 @@ Raise `target_seconds_*` for a steadier reading on a noisy link, or raise `max_b
 
 ## Home Assistant
 
-`Speedster.exe` is Windows-only, so there is a separate Home Assistant integration in [`ha/`](ha/README.md): the same Cloudflare engine, the same options, the same `results.csv` format and the same report, as sensors on a drift-proof schedule. Install it through HACS as a custom repository, or copy `ha/custom_components/speedster` into `<config>/custom_components/`.
+`Speedster.exe` is Windows-only, so there is a separate Home Assistant integration in [`ha/`](ha/README.md): the same Cloudflare engine, the same options, the same `results.csv` format and the same report, as sensors on a drift-proof schedule. Install it through HACS as a custom repository, or copy `custom_components/speedster` into `<config>/custom_components/`.
 
 It is a port, not a wrapper - the tray, the metered detection and the SSID allow-list have no Linux counterpart, and network gating is done with a gate entity instead. The measurement is deliberately identical, so a history from either side can be concatenated with the other.
 

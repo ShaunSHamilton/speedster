@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from datetime import timedelta
 from typing import TYPE_CHECKING, Any
 from unittest.mock import AsyncMock, patch
@@ -150,6 +151,35 @@ async def test_run_test_service_ignores_the_gate(
         await hass.services.async_call(DOMAIN, SERVICE_RUN_TEST, {}, blocking=True)
 
     assert run.call_count == 1
+
+
+async def test_run_stays_locked_until_result_is_recorded(
+    hass: HomeAssistant, mock_entry: ConfigEntry
+) -> None:
+    """A second trigger cannot start while first result is still being persisted."""
+    await _setup(hass, mock_entry)
+    coordinator = mock_entry.runtime_data
+    recording = asyncio.Event()
+    release = asyncio.Event()
+
+    async def hold_record(*_args: Any, **_kwargs: Any) -> None:
+        recording.set()
+        await release.wait()
+
+    run = AsyncMock(return_value=RESULT)
+    with (
+        patch.object(coordinator._engine, "run", run),
+        patch.object(coordinator, "_async_record", side_effect=hold_record),
+    ):
+        first = asyncio.create_task(coordinator.async_run_test(scheduled=False))
+        await recording.wait()
+        assert coordinator.testing
+        await coordinator.async_run_test(scheduled=False)
+        assert run.call_count == 1
+        release.set()
+        await first
+
+    assert not coordinator.testing
 
 
 async def test_unload(hass: HomeAssistant, mock_entry: ConfigEntry) -> None:
