@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# Run a throwaway Home Assistant with the integration loaded from this checkout.
+#
+#   ha/scripts/develop
+#
+# The config lives in ha/devcfg (gitignored). The integration is symlinked, so an
+# edit plus a restart is the whole loop.
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+if [ ! -d .venv ]; then
+  python3 -m venv .venv
+  ./.venv/bin/pip install --upgrade pip
+  ./.venv/bin/pip install -r requirements-dev.txt
+fi
+
+mkdir -p devcfg/custom_components
+ln -sfn "$PWD/custom_components/speedster" devcfg/custom_components/speedster
+# The report template is shared with the Windows build and lives at the repo root.
+ln -sfn "$PWD/../portal.html" custom_components/speedster/portal.html
+
+if [ ! -f devcfg/configuration.yaml ]; then
+  cat > devcfg/configuration.yaml <<'YAML'
+default_config:
+logger:
+  default: info
+  logs:
+    custom_components.speedster: debug
+YAML
+fi
+
+exec ./.venv/bin/python -m homeassistant --config devcfg --debug

@@ -9,3 +9,16 @@ bin/
 .vs/
 .vscode/
 *.swp
+
+# Home Assistant integration (ha/)
+ha/.venv/
+ha/devcfg/
+ha/build/
+speedster.zip
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+# portal.html is symlinked in for dev; the release workflow copies it in
+ha/custom_components/speedster/portal.html

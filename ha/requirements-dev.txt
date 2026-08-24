@@ -1,0 +1,7 @@
+# Pin the harness to the Home Assistant version the integration targets.
+homeassistant>=2026.1.0
+pytest-homeassistant-custom-component>=0.13.250
+pytest-asyncio>=0.24
+aioresponses>=0.7.7
+ruff>=0.9
+mypy>=1.14

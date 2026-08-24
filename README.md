@@ -100,6 +100,12 @@ Raise `target_seconds_*` for a steadier reading on a noisy link, or raise `max_b
 
 **Open report** writes `report.html` and opens it. It contains median/min/max download, upload and latency for the selected range, the test and skip counts, cumulative bytes and a monthly projection, a throughput chart, a latency chart, and the last 50 rows as a table. Hovering a point shows that test's bytes and the window it was measured over. Range presets are 24 hours / 7 days / 30 days / all. It follows the system light or dark theme and needs no network access to render.
 
+## Home Assistant
+
+`Speedster.exe` is Windows-only, so there is a separate Home Assistant integration in [`ha/`](ha/README.md): the same Cloudflare engine, the same options, the same `results.csv` format and the same report, as sensors on a drift-proof schedule. Install it through HACS as a custom repository, or copy `ha/custom_components/speedster` into `<config>/custom_components/`.
+
+It is a port, not a wrapper - the tray, the metered detection and the SSID allow-list have no Linux counterpart, and network gating is done with a gate entity instead. The measurement is deliberately identical, so a history from either side can be concatenated with the other.
+
 ## Uninstall
 
 1. Right-click the tray icon -> uncheck **Start with Windows** -> **Exit**.

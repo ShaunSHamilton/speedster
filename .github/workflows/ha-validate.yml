@@ -1,0 +1,48 @@
+name: Validate integration
+
+on:
+  push:
+    paths: ["ha/**", "hacs.json", ".github/workflows/ha-validate.yml"]
+  pull_request:
+    paths: ["ha/**", "hacs.json", ".github/workflows/ha-validate.yml"]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ha
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+          cache: pip
+      - run: pip install -r requirements-dev.txt
+      - name: portal.html must not be duplicated
+        working-directory: .
+        run: |
+          if [ -f ha/custom_components/speedster/portal.html ]; then
+            diff -q portal.html ha/custom_components/speedster/portal.html
+          fi
+      - run: ruff check .
+      - run: ruff format --check .
+      - run: mypy custom_components/speedster
+      - run: pytest -q
+
+  hassfest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: home-assistant/actions/hassfest@master
+        with:
+          path: ./ha
+
+  hacs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: hacs/action@main
+        with:
+          category: integration
